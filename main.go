@@ -8,6 +8,7 @@ import (
 	"log"
 	"path/filepath"
 	"time"
+	"unicode"
 
 	"github.com/distributed/sers"
 )
@@ -54,12 +55,11 @@ func initializeConnection(r io.ReadCloser) error {
 	}()
 	select {
 	case data := <-ch:
-		fmt.Println(string(data))
+		fmt.Print(string(data))
+		return nil
 	case <-time.After(10 * time.Second):
 		return errors.New("Timeout waiting for device")
 	}
-
-	return errors.New("Problem reading from device")
 }
 
 func readData(r io.ReadCloser, buf []byte) ([]byte, error) {
@@ -88,4 +88,13 @@ func getSerialDevices() ([]string, error) {
 		}
 	}
 	return deviceList, nil
+}
+
+func isPrintable(s string) bool {
+	for _, r := range s {
+		if r > unicode.MaxASCII || !unicode.IsPrint(r) {
+			return false
+		}
+	}
+	return true
 }
