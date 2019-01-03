@@ -59,11 +59,7 @@ func GetDevices() ([]SerialDevice, error) {
 	}
 	for _, d := range discovered {
 		var device SerialDevice
-		sp, err := sers.Open(d)
-		if err != nil {
-			return nil, err
-		}
-		device.SerialPort = sp
+		device.TTY = d
 		found, err := device.findBaudRate()
 		if err != nil {
 			return nil, err
@@ -81,6 +77,11 @@ func GetDevices() ([]SerialDevice, error) {
 func (device *SerialDevice) findBaudRate() (bool, error) {
 	fmt.Println("Testing common bauds")
 	for _, baud := range commonBauds {
+		sp, err := sers.Open(device.TTY)
+		if err != nil {
+			return false, err
+		}
+		device.SerialPort = sp
 		fmt.Printf("Setting baud to: %d\n", baud)
 		device.Baud = baud
 		found, err := testBaud(baud, device.SerialPort)
@@ -109,8 +110,6 @@ func (device *SerialDevice) findBaudRate() (bool, error) {
 func testBaud(baud int, sp sers.SerialPort) (bool, error) {
 
 	err := sp.SetMode(baud, 8, sers.N, 1, sers.NO_HANDSHAKE)
-	duration := 2 * time.Second
-	time.Sleep(duration)
 	if err != nil {
 		return false, err
 	}
