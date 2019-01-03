@@ -200,7 +200,7 @@ func getSerialDevices() ([]string, error) {
 
 func isPrintable(s string) bool {
 	for _, r := range s {
-		if r > unicode.MaxASCII || !unicode.IsPrint(r) {
+		if r > unicode.MaxASCII {
 			return false
 		}
 	}
