@@ -71,6 +71,7 @@ func GetDevices() ([]SerialDevice, error) {
 		if !found {
 			return nil, errors.New("Unable to determine baud rate")
 		}
+		fmt.Printf("Found working baud: %d", device.Baud)
 		devices = append(devices, device)
 
 	}
@@ -80,7 +81,7 @@ func GetDevices() ([]SerialDevice, error) {
 func (device *SerialDevice) findBaudRate() (bool, error) {
 	fmt.Println("Testing common bauds")
 	for _, baud := range commonBauds {
-		fmt.Printf("Setting baud to: %d", baud)
+		fmt.Printf("Setting baud to: %d\n", baud)
 		device.Baud = baud
 		found, err := testBaud(baud, device.SerialPort)
 		if err != nil {
@@ -92,7 +93,7 @@ func (device *SerialDevice) findBaudRate() (bool, error) {
 	}
 	fmt.Println("Common bauds failed, attempting more comprehensive list")
 	for _, baud := range bauds {
-		fmt.Printf("Setting baud to: %d", baud)
+		fmt.Printf("Setting baud to: %d\n", baud)
 		device.Baud = baud
 		found, err := testBaud(baud, device.SerialPort)
 		if err != nil {
@@ -108,6 +109,8 @@ func (device *SerialDevice) findBaudRate() (bool, error) {
 func testBaud(baud int, sp sers.SerialPort) (bool, error) {
 
 	err := sp.SetMode(baud, 8, sers.N, 1, sers.NO_HANDSHAKE)
+	duration := 2 * time.Second
+	time.Sleep(duration)
 	if err != nil {
 		return false, err
 	}
@@ -122,7 +125,7 @@ func testBaud(baud int, sp sers.SerialPort) (bool, error) {
 	if read {
 		return true, nil
 	}
-	fmt.Printf("Baud %d failed", baud)
+	fmt.Printf("Baud %d failed\n", baud)
 	return false, nil
 }
 
