@@ -91,9 +91,15 @@ func (device *SerialDevice) findBaudRate() (bool, error) {
 		if found {
 			return true, nil
 		}
+		sp.Close()
 	}
 	fmt.Println("Common bauds failed, attempting more comprehensive list")
 	for _, baud := range bauds {
+		sp, err := sers.Open(device.TTY)
+		if err != nil {
+			return false, err
+		}
+		device.SerialPort = sp
 		fmt.Printf("Setting baud to: %d\n", baud)
 		device.Baud = baud
 		found, err := testBaud(baud, device.SerialPort)
@@ -103,6 +109,7 @@ func (device *SerialDevice) findBaudRate() (bool, error) {
 		if found {
 			return true, nil
 		}
+		sp.Close()
 	}
 	return false, nil
 }
