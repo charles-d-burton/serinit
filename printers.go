@@ -110,6 +110,8 @@ func (device *SerialDevice) findBaudRate() (bool, error) {
 func testBaud(baud int, sp sers.SerialPort) (bool, error) {
 
 	err := sp.SetMode(baud, 8, sers.N, 1, sers.NO_HANDSHAKE)
+	duration := 2 * time.Second
+	time.Sleep(duration)
 	if err != nil {
 		return false, err
 	}
