@@ -136,7 +136,7 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 	errorChan := make(chan error, 1)
 	defer close(dataChan)
 	defer close(errorChan)
-
+	workingBaud := false
 	go func() {
 		data, err := readData(r)
 		if err != nil {
@@ -147,9 +147,12 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 	}()
 	select {
 	case data := <-dataChan:
-		fmt.Print(string(data))
 		if isPrintable(string(data)) {
+			workingBaud = true
 			fmt.Print(string(data))
+			for co := range dataChan {
+				fmt.Print(string(co))
+			}
 			return true, nil
 		} else {
 			fmt.Println("Characters not printable!")
@@ -160,7 +163,7 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 		return false, err
 	case <-time.After(5 * time.Second):
 		fmt.Println("Timeout of 5 seconds reached")
-		return false, nil
+		return workingBaud, nil
 	}
 }
 
