@@ -153,6 +153,7 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 	}()
 	select {
 	case data := <-dataChan:
+		fmt.Print(string(data))
 		if isPrintable(string(data)) {
 			fmt.Print(string(data))
 		} else {
