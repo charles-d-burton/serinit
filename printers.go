@@ -156,7 +156,9 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 		fmt.Print(string(data))
 		if isPrintable(string(data)) {
 			fmt.Print(string(data))
+			return true, nil
 		} else {
+			fmt.Println("Characters not printable!")
 			return false, nil
 		}
 
@@ -166,7 +168,6 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 		fmt.Println("Timeout of 5 seconds reached")
 		return false, nil
 	}
-	return false, nil
 }
 
 func readData(r io.ReadCloser) ([]byte, error) {
@@ -201,6 +202,8 @@ func getSerialDevices() ([]string, error) {
 func isPrintable(s string) bool {
 	for _, r := range s {
 		if r > unicode.MaxASCII {
+			fmt.Println("FOUND NON PRINTABLE CHAR")
+			fmt.Println(r)
 			return false
 		}
 	}
