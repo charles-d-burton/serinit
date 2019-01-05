@@ -35,13 +35,17 @@ func main() {
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
 			value := scanner.Text()
+			log.Println("Sending Command: " + value)
 			if strings.HasPrefix(value, ";") {
 				log.Println("Comment: " + value)
 			} else {
 				devices[0].SerialPort.Write([]byte(value + "\n"))
 				retval := <-readerChan
 				log.Println(retval)
-
+				for !strings.Contains(retval, "ok") {
+					retval = <-readerChan
+					log.Println(retval)
+				}
 			}
 			//fmt.Print(scanner.Text())
 		}
@@ -53,7 +57,6 @@ func readChannel(r io.Reader, reader chan string) {
 	for {
 		buf := make([]byte, 128)
 		r.Read(buf)
-		log.Println(string(buf))
 		reader <- string(buf)
 	}
 }
