@@ -131,11 +131,13 @@ func (device *SerialDevice) isBaudValid(baud int) (bool, error) {
 	device.Baud = baud
 	found, err := testBaud(baud, device.SerialPort)
 	if err != nil {
+		sp.Close()
 		return false, err
 	}
 	if found {
 		return true, nil
 	} else {
+		sp.Close()
 		return false, nil
 	}
 }
