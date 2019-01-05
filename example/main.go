@@ -36,6 +36,8 @@ func main() {
 	for scanner.Scan() {
 		//fmt.Print(scanner.Text())
 	}
+	for {
+	}
 }
 
 func readChannel(r io.Reader) {
