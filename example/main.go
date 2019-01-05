@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/charles-d-burton/serinit"
 )
@@ -34,9 +35,13 @@ func main() {
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
+		value := scanner.Text()
+		if strings.HasPrefix(value, ";") {
+			log.Println("Comment: " + value)
+		} else {
+			devices[0].SerialPort.Write([]byte(value + "\n"))
+		}
 		//fmt.Print(scanner.Text())
-	}
-	for {
 	}
 }
 
