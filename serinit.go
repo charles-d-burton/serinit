@@ -70,7 +70,7 @@ func GetDevices() ([]SerialDevice, error) {
 		if !found {
 			return nil, errors.New("Unable to determine baud rate")
 		}
-		fmt.Printf("Found working baud: %d", device.Baud)
+		fmt.Printf("Found working baud: %d\n", device.Baud)
 		devices = append(devices, device)
 
 	}

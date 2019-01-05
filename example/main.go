@@ -20,9 +20,9 @@ func main() {
 		readerChan := make(chan string, 1)
 		log.Println("Starting reader")
 		go readChannel(device.SerialPort, readerChan)
-		log.Println("Requesting temperature")
-		_, err := device.SerialPort.Write([]byte("M105\n"))
-		log.Println("Request sent")
+		//log.Println("Requesting temperature")
+		//_, err := device.SerialPort.Write([]byte("M105\n"))
+		//log.Println("Request sent")
 		if err != nil {
 			log.Println(err)
 		}
