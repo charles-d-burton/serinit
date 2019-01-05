@@ -39,24 +39,27 @@ func main() {
 			if strings.HasPrefix(value, ";") {
 				log.Println("Comment: " + value)
 			} else {
-				devices[0].SerialPort.Write([]byte(value + "\n"))
-				retval := <-readerChan
-				log.Println(retval)
-				for !strings.Contains(retval, "ok") {
-					retval = <-readerChan
-					log.Println(retval)
+				device.SerialPort.Write([]byte(value + "\n"))
+				for {
+					select {
+					case retval := <-readerChan:
+						if strings.Contains(retval, "ok") {
+							log.Println("Breaking out of loop to send next command")
+							break
+						}
+					}
 				}
 			}
-			//fmt.Print(scanner.Text())
 		}
 	}
-
 }
 
 func readChannel(r io.Reader, reader chan string) {
 	for {
 		buf := make([]byte, 128)
 		r.Read(buf)
+		log.Println("From Device: ")
+		log.Println(string(buf))
 		reader <- string(buf)
 	}
 }
