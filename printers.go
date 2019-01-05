@@ -145,17 +145,15 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 	workingBaud := abool.New()
 	closing := abool.New()
 	go func() {
-		for {
-			data, err := readData(r)
-			if err != nil {
-				errorChan <- err
-				return
-			}
-			if !closing.IsSet() {
-				dataChan <- data
-			} else {
-				return
-			}
+		data, err := readData(r)
+		if err != nil {
+			errorChan <- err
+			return
+		}
+		if !closing.IsSet() {
+			dataChan <- data
+		} else {
+			return
 		}
 	}()
 	select {
@@ -164,8 +162,18 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 			workingBaud.Set()
 			fmt.Print(string(data))
 			go func() {
-				for co := range dataChan {
-					fmt.Print(string(co))
+				for {
+					data, err := readData(r)
+					if err != nil {
+						errorChan <- err
+						return
+					}
+					if !closing.IsSet() {
+						fmt.Print(string(data))
+					} else {
+						return
+					}
+
 				}
 			}()
 		} else {
@@ -179,8 +187,6 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 	case <-time.After(5 * time.Second):
 		fmt.Println("Timeout of 5 seconds reached")
 		closing.Set()
-		close(dataChan)
-		close(errorChan)
 		return workingBaud.IsSet(), nil
 	}
 	return workingBaud.IsSet(), nil
