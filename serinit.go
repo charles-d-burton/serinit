@@ -204,7 +204,7 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 	case err := <-errorChan:
 		closing.Set()
 		return false, err
-	case <-time.After(5 * time.Second):
+	case <-time.After(time.Second):
 		fmt.Println("Timeout of 5 seconds reached")
 		closing.Set()
 		return workingBaud.IsSet(), nil
