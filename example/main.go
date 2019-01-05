@@ -46,6 +46,11 @@ func main() {
 						if strings.Contains(retval, "ok") {
 							log.Println("Breaking out of loop to send next command")
 							break
+						} else {
+							_, err := device.SerialPort.Write([]byte("M105\n"))
+							if err != nil {
+								log.Println(err)
+							}
 						}
 					}
 					break
