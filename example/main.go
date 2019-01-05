@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/charles-d-burton/serinit"
 )
@@ -21,5 +24,16 @@ func main() {
 		buf := make([]byte, 128)
 		device.SerialPort.Read(buf)
 		log.Println(string(buf))
+	}
+
+	file, err := os.Open("./hook.gcode")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		fmt.Print(scanner.Text())
 	}
 }
