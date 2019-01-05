@@ -161,21 +161,16 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 		if isPrintable(string(data)) {
 			workingBaud.Set()
 			fmt.Print(string(data))
-			go func() {
-				for {
-					data, err := readData(r)
-					if err != nil {
-						errorChan <- err
-						return
-					}
-					if !closing.IsSet() {
-						fmt.Print(string(data))
-					} else {
-						return
-					}
+			for {
+				data, err := readData(r)
+				if err != nil {
+					errorChan <- err
 
 				}
-			}()
+				if !closing.IsSet() {
+					fmt.Print(string(data))
+				}
+			}
 		} else {
 			fmt.Println("Characters not printable!")
 			closing.Set()
@@ -189,7 +184,6 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 		closing.Set()
 		return workingBaud.IsSet(), nil
 	}
-	return workingBaud.IsSet(), nil
 }
 
 func readData(r io.ReadCloser) ([]byte, error) {
