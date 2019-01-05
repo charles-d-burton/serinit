@@ -35,10 +35,10 @@ func main() {
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
 			value := scanner.Text()
-			log.Println("Sending Command: " + value)
 			if strings.HasPrefix(value, ";") {
 				log.Println("Comment: " + value)
 			} else {
+				log.Println("Sending Command: " + value)
 				device.SerialPort.Write([]byte(value + "\n"))
 				for {
 					select {
