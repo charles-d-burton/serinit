@@ -48,6 +48,7 @@ func main() {
 							break
 						}
 					}
+					break
 				}
 			}
 		}
