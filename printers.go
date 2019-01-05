@@ -170,6 +170,7 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 			}()
 		} else {
 			fmt.Println("Characters not printable!")
+			closing.Set()
 			return false, nil
 		}
 
