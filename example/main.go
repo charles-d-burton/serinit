@@ -18,10 +18,12 @@ func main() {
 	for _, device := range devices {
 		log.Println("Requesting temperature")
 		_, err := device.SerialPort.Write([]byte("M105\n"))
+		log.Println("Request sent")
 		if err != nil {
 			log.Println(err)
 		}
 		buf := make([]byte, 128)
+		log.Println("Reading Buffer")
 		device.SerialPort.Read(buf)
 		log.Println(string(buf))
 	}
