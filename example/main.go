@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -16,16 +16,14 @@ func main() {
 	}
 
 	for _, device := range devices {
+		log.Println("Starting reader")
+		go readChannel(device.SerialPort)
 		log.Println("Requesting temperature")
 		_, err := device.SerialPort.Write([]byte("M105\n"))
 		log.Println("Request sent")
 		if err != nil {
 			log.Println(err)
 		}
-		buf := make([]byte, 128)
-		log.Println("Reading Buffer")
-		device.SerialPort.Read(buf)
-		log.Println(string(buf))
 	}
 
 	file, err := os.Open("./hook.gcode")
@@ -36,6 +34,14 @@ func main() {
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		fmt.Print(scanner.Text())
+		//fmt.Print(scanner.Text())
+	}
+}
+
+func readChannel(r io.Reader) {
+	for {
+		buf := make([]byte, 128)
+		r.Read(buf)
+		log.Println(string(buf))
 	}
 }
