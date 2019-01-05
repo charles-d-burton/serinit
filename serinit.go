@@ -49,8 +49,8 @@ var (
 //SerialDevice container to represent the location of a serial device and return an io port to it
 type SerialDevice struct {
 	TTY        string          `json:"tty"`
-	SerialPort sers.SerialPort `json:"-"`
 	Baud       int             `json:"baud"`
+	SerialPort sers.SerialPort `json:"-"`
 }
 
 //GetDevices iterate through a list of serial devices and initialize them
@@ -75,6 +75,23 @@ func GetDevices() ([]SerialDevice, error) {
 
 	}
 	return devices, nil
+}
+
+//Reset and reinitialize the connection
+func (device *SerialDevice) Reset() error {
+	found, err := device.findBaudRate()
+	if err != nil {
+		return err
+	}
+	if !found {
+		return errors.New("Unable to determine the baud rate for device")
+	}
+	return nil
+}
+
+//Close the connection to the device
+func (device *SerialDevice) Close() error {
+	return device.Close()
 }
 
 /*
