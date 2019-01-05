@@ -11,6 +11,7 @@ import (
 	"unicode"
 
 	"github.com/distributed/sers"
+	"github.com/tevino/abool"
 )
 
 var (
@@ -141,7 +142,8 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 	errorChan := make(chan error, 1)
 	defer close(dataChan)
 	defer close(errorChan)
-	workingBaud := false
+	workingBaud := abool.New()
+	closing := abool.New()
 	go func() {
 		for {
 			data, err := readData(r)
@@ -149,13 +151,17 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 				errorChan <- err
 				return
 			}
-			dataChan <- data
+			if !closing.IsSet() {
+				dataChan <- data
+			} else {
+				return
+			}
 		}
 	}()
 	select {
 	case data := <-dataChan:
 		if isPrintable(string(data)) {
-			workingBaud = true
+			workingBaud.Set()
 			fmt.Print(string(data))
 			go func() {
 				for co := range dataChan {
@@ -171,11 +177,12 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 		return false, err
 	case <-time.After(5 * time.Second):
 		fmt.Println("Timeout of 5 seconds reached")
+		closing.Set()
 		close(dataChan)
 		close(errorChan)
-		return workingBaud, nil
+		return workingBaud.IsSet(), nil
 	}
-	return workingBaud, nil
+	return workingBaud.IsSet(), nil
 }
 
 func readData(r io.ReadCloser) ([]byte, error) {
