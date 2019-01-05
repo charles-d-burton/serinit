@@ -169,6 +169,7 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 	doneChan := make(chan bool, 1)   //To let the system know processing is done
 	errorChan := make(chan error, 1) //Feed in an error if one is encountered
 	defer close(errorChan)
+	defer close(doneChan)
 	workingBaud := abool.New()
 	closing := abool.New()
 	go func() {

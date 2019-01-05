@@ -61,10 +61,12 @@ func main() {
 }
 
 func readChannel(r io.Reader, reader chan string) {
+
 	for {
 		buf := make([]byte, 128)
+		log.Println("Reading buffer")
 		r.Read(buf)
-		log.Println("From Device: ")
+		log.Println("Buffer read from Device: ")
 		log.Println(string(buf))
 		reader <- string(buf)
 	}
