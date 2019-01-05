@@ -138,6 +138,7 @@ func testBaud(baud int, sp sers.SerialPort) (bool, error) {
 }
 
 func readUntilTimeout(r io.ReadCloser) (bool, error) {
+	doneChan := make(chan bool, 1)
 	errorChan := make(chan error, 1)
 	defer close(errorChan)
 	workingBaud := abool.New()
@@ -164,9 +165,14 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 					return
 				}
 			}
+		} else {
+			doneChan <- true
 		}
 	}()
 	select {
+	case <-doneChan:
+		closing.Set()
+		return false, nil
 	case err := <-errorChan:
 		closing.Set()
 		return false, err
