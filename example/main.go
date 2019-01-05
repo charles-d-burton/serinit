@@ -76,7 +76,7 @@ func readChannel(r io.Reader, reader chan string) {
 		log.Println("Reading some data")
 		buf := make([]byte, 128)
 		_, err := r.Read(buf)
-		log.Println("Read some data, sending it out")
+		log.Println("Read some data: " + string(buf))
 		if err != nil {
 			log.Fatal(err)
 		}
