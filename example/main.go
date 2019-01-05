@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -64,19 +66,18 @@ func main() {
 
 func requestTemps(r io.Writer) error {
 	for {
-		log.Println("Requesting temps M105")
+		fmt.Println("Requesting temps M105")
 		r.Write([]byte("M105\n"))
-		log.Println("Sleeping 1 second")
 		time.Sleep(time.Second)
 	}
 }
 
 func readChannel(r io.Reader, reader chan string) {
 	for {
-		log.Println("Reading some data")
-		buf := make([]byte, 128)
-		_, err := r.Read(buf)
-		log.Println("Read some data: " + string(buf))
+		//buf := make([]byte, 128)
+		buf, err := ioutil.ReadAll(r)
+		//_, err := r.Read(buf)
+		fmt.Println("Read: " + string(buf))
 		if err != nil {
 			log.Fatal(err)
 		}
