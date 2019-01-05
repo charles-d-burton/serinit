@@ -138,26 +138,18 @@ func testBaud(baud int, sp sers.SerialPort) (bool, error) {
 }
 
 func readUntilTimeout(r io.ReadCloser) (bool, error) {
-	dataChan := make(chan []byte, 1)
 	errorChan := make(chan error, 1)
-	defer close(dataChan)
 	defer close(errorChan)
 	workingBaud := abool.New()
 	closing := abool.New()
 	go func() {
+		if closing.IsSet() {
+			return
+		}
 		data, err := readData(r)
 		if err != nil {
 			errorChan <- err
-			return
 		}
-		if !closing.IsSet() {
-			dataChan <- data
-		} else {
-			return
-		}
-	}()
-	select {
-	case data := <-dataChan:
 		if isPrintable(string(data)) {
 			workingBaud.Set()
 			fmt.Print(string(data))
@@ -165,19 +157,18 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 				data, err := readData(r)
 				if err != nil {
 					errorChan <- err
-
 				}
 				if !closing.IsSet() {
 					fmt.Print(string(data))
+				} else {
+					return
 				}
 			}
-		} else {
-			fmt.Println("Characters not printable!")
-			closing.Set()
-			return false, nil
 		}
-
+	}()
+	select {
 	case err := <-errorChan:
+		closing.Set()
 		return false, err
 	case <-time.After(5 * time.Second):
 		fmt.Println("Timeout of 5 seconds reached")
