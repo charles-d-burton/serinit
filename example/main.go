@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -42,8 +41,8 @@ func main() {
 			if strings.HasPrefix(value, ";") {
 				log.Println("Comment: " + value)
 			} else {
-				log.Println("Sending Command: " + value)
-				device.SerialPort.Write([]byte(value + "\n"))
+				//log.Println("Sending Command: " + value)
+				//device.SerialPort.Write([]byte(value + "\n"))
 				for {
 					select {
 					case retval := <-readerChan:
@@ -73,14 +72,14 @@ func requestTemps(r io.Writer) error {
 }
 
 func readChannel(r io.Reader, reader chan string) {
+	buf := make([]byte, 128)
 	for {
-		//buf := make([]byte, 128)
-		buf, err := ioutil.ReadAll(r)
-		//_, err := r.Read(buf)
-		fmt.Println("Read: " + string(buf))
+
+		len, err := r.Read(buf)
+		fmt.Println("Read: " + string(buf[:len]))
 		if err != nil {
 			log.Fatal(err)
 		}
-		reader <- string(buf)
+		reader <- string(buf[:len])
 	}
 }
