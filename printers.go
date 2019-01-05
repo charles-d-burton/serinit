@@ -46,12 +46,14 @@ var (
 	}
 )
 
+//SerialDevice container to represent the location of a serial device and return an io port to it
 type SerialDevice struct {
 	TTY        string          `json:"tty"`
 	SerialPort sers.SerialPort `json:"-"`
 	Baud       int             `json:"baud"`
 }
 
+//GetDevices iterate through a list of serial devices and initialize them
 func GetDevices() ([]SerialDevice, error) {
 	var devices []SerialDevice
 	discovered, err := getSerialDevices()
@@ -75,6 +77,9 @@ func GetDevices() ([]SerialDevice, error) {
 	return devices, nil
 }
 
+/*
+ * Discover the baud rate, first connect to the most common.  Then try all the rest
+ */
 func (device *SerialDevice) findBaudRate() (bool, error) {
 	fmt.Println("Testing common bauds")
 	for _, baud := range commonBauds {
@@ -115,6 +120,7 @@ func (device *SerialDevice) findBaudRate() (bool, error) {
 	return false, nil
 }
 
+//Create the connection then attempt to read from the serial port
 func testBaud(baud int, sp sers.SerialPort) (bool, error) {
 	err := sp.SetMode(baud, 8, sers.N, 1, sers.NO_HANDSHAKE)
 	duration := 2 * time.Second
@@ -138,8 +144,8 @@ func testBaud(baud int, sp sers.SerialPort) (bool, error) {
 }
 
 func readUntilTimeout(r io.ReadCloser) (bool, error) {
-	doneChan := make(chan bool, 1)
-	errorChan := make(chan error, 1)
+	doneChan := make(chan bool, 1)   //To let the system know processing is done
+	errorChan := make(chan error, 1) //Feed in an error if one is encountered
 	defer close(errorChan)
 	workingBaud := abool.New()
 	closing := abool.New()
@@ -147,11 +153,11 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 		if closing.IsSet() {
 			return
 		}
-		data, err := readData(r)
+		data, err := readData(r) //Read in some data
 		if err != nil {
 			errorChan <- err
 		}
-		if isPrintable(string(data)) {
+		if isPrintable(string(data)) { //Test if that data is garbage
 			workingBaud.Set()
 			fmt.Print(string(data))
 			for {
@@ -166,7 +172,7 @@ func readUntilTimeout(r io.ReadCloser) (bool, error) {
 				}
 			}
 		} else {
-			doneChan <- true
+			doneChan <- true //Data is garbage so exit
 		}
 	}()
 	select {
@@ -212,6 +218,7 @@ func getSerialDevices() ([]string, error) {
 	return deviceList, nil
 }
 
+//test if the characters retrieved from the serial device are ASCII
 func isPrintable(s string) bool {
 	for _, r := range s {
 		if r > unicode.MaxASCII {
