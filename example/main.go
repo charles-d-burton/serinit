@@ -102,10 +102,11 @@ func readChannel(deviceAddr string, reader chan string) {
 }
 
 func stripComments(line string) string {
+	line = strings.TrimSpace(line)
 	idx := strings.Index(line, ";")
-	command := strings.TrimSpace(string([]byte(line)[0:idx]))
-	if command != "" {
-		return command + "\n"
+	if idx == 0 {
+		return ""
 	}
+	command := string([]byte(line)[0:idx])
 	return command
 }
