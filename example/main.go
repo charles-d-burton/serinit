@@ -108,6 +108,9 @@ func stripComments(line string) string {
 	if idx == 0 {
 		fmt.Println("Is comment: " + line)
 		return ""
+	} else if idx == -1 {
+		fmt.Println("No comments in line")
+		return line
 	}
 	fmt.Println("Is command: " + line)
 	command := string([]byte(line)[0:idx])
