@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/charles-d-burton/serinit"
 )
@@ -22,6 +23,7 @@ func main() {
 		writerChan := writeChannel(device.SerialPort)
 		log.Println("Starting reader")
 		go readChannel(device.SerialPort, readerChan)
+		go requestTemps(writerChan)
 		//go requestTemps(device.SerialPort)
 		//log.Println("Requesting temperature")
 		//_, err := device.SerialPort.Write([]byte("M105\n"))
@@ -63,13 +65,13 @@ func main() {
 	}
 }
 
-/*func requestTemps(w chan string) error {
+func requestTemps(w chan string) error {
 	for {
 		fmt.Println("Requesting temps M105")
-		r.Write([]byte("M105\n"))
+		w <- "M105\n"
 		time.Sleep(time.Second)
 	}
-}*/
+}
 
 func writeChannel(w io.Writer) chan string {
 	buf := make(chan string, 10)
