@@ -106,15 +106,18 @@ func writeChannel(w io.Writer) chan string {
 func readChannel(r io.Reader) chan string {
 	readerChan := make(chan string, 5)
 	buf := make([]byte, 128)
-	for {
-		len, err := r.Read(buf)
-		log.Println("Got message!")
-		if err != nil {
-			log.Fatal(err)
+	go func() {
+		for {
+			len, err := r.Read(buf)
+			log.Println("Got message!")
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Println(string(buf[0:len]))
+			readerChan <- string(buf[0:len])
 		}
-		log.Println(string(buf[0:len]))
-		readerChan <- string(buf[0:len])
-	}
+	}()
+	return readerChan
 }
 
 func stripComments(line string) string {
