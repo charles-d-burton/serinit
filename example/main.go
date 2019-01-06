@@ -60,6 +60,7 @@ func waitForOk(r chan string) bool {
 	select {
 	case value := <-r:
 		if value == "ok" {
+			log.Println("Found ok!")
 			return true
 		} else {
 			return waitForOk(r)
