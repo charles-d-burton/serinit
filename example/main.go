@@ -59,7 +59,7 @@ func main() {
 func waitForOk(r chan string) bool {
 	select {
 	case value := <-r:
-		if value == "ok" {
+		if strings.Contains(value, "ok") {
 			log.Println("Found ok!")
 			return true
 		} else {
