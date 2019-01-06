@@ -23,6 +23,7 @@ func main() {
 		writerChan := writeChannel(device.SerialPort)
 		log.Println("Starting reader")
 		go readChannel(device.SerialPort, readerChan)
+		time.Sleep(3 * time.Second)
 		//go requestTemps(writerChan)
 		//go requestTemps(device.SerialPort)
 		//log.Println("Requesting temperature")
