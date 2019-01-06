@@ -56,6 +56,8 @@ func main() {
 					}
 					break
 				}
+			} else {
+				log.Println("Discarding comment")
 			}
 		}
 	}
