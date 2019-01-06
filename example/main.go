@@ -79,6 +79,7 @@ func writeChannel(w io.Writer) chan string {
 			case line := <-buf:
 				log.Println("Got message to write: " + line)
 				_, err := w.Write([]byte(line))
+				log.Println("Message written!")
 				if err != nil {
 					log.Fatal(err)
 				}
