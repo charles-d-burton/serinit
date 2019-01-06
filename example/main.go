@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/charles-d-burton/serinit"
-	"github.com/papertrail/go-tail/follower"
 )
 
 func main() {
@@ -22,7 +21,7 @@ func main() {
 		readerChan := make(chan string, 1)
 		writerChan := writeChannel(device.SerialPort)
 		log.Println("Starting reader")
-		go readChannel(device.TTY, readerChan)
+		go readChannel(device.SerialPort, readerChan)
 		//go requestTemps(device.SerialPort)
 		//log.Println("Requesting temperature")
 		//_, err := device.SerialPort.Write([]byte("M105\n"))
@@ -88,7 +87,7 @@ func writeChannel(w io.Writer) chan string {
 	return buf
 }
 
-func readChannel(deviceAddr string, reader chan string) {
+/*func readChannel(deviceAddr string, reader chan string) {
 	t, err := follower.New(deviceAddr, follower.Config{
 		Whence: io.SeekEnd,
 		Offset: 0,
@@ -99,6 +98,17 @@ func readChannel(deviceAddr string, reader chan string) {
 	}
 	for line := range t.Lines() {
 		reader <- line.String()
+	}
+}*/
+
+func readChannel(r io.ReadCloser, reader chan string) {
+	buf := make([]byte, 128)
+	for {
+		len, err := r.Read(buf)
+		if err != nil {
+			log.Fatal(err)
+		}
+		reader <- string(buf[0:len])
 	}
 }
 
