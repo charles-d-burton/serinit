@@ -19,10 +19,9 @@ func main() {
 	}
 
 	for _, device := range devices {
-		readerChan := make(chan string, 1)
-		writerChan := writeChannel(device.SerialPort)
 		log.Println("Starting reader")
-		go readChannel(device.SerialPort, readerChan)
+		readerChan := readChannel(device.SerialPort)
+		writerChan := writeChannel(device.SerialPort)
 		time.Sleep(3 * time.Second)
 		//go requestTemps(writerChan)
 		//go requestTemps(device.SerialPort)
@@ -104,7 +103,8 @@ func writeChannel(w io.Writer) chan string {
 	}
 }*/
 
-func readChannel(r io.Reader, reader chan string) {
+func readChannel(r io.Reader) chan string {
+	readerChan := make(chan string, 5)
 	buf := make([]byte, 128)
 	for {
 		len, err := r.Read(buf)
@@ -113,7 +113,7 @@ func readChannel(r io.Reader, reader chan string) {
 			log.Fatal(err)
 		}
 		log.Println(string(buf[0:len]))
-		reader <- string(buf[0:len])
+		readerChan <- string(buf[0:len])
 	}
 }
 
