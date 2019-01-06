@@ -28,6 +28,9 @@ func main() {
 		//log.Println("Requesting temperature")
 		//_, err := device.SerialPort.Write([]byte("M105\n"))
 		//log.Println("Request sent")
+		writerChan <- "M105\n"
+		writerChan <- "M105\n"
+		writerChan <- "M105\n"
 		if err != nil {
 			log.Println(err)
 		}
