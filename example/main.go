@@ -43,24 +43,22 @@ func main() {
 			if value != "" {
 				log.Println("Sending Command: " + value)
 				writerChan <- value
-				for {
-					select {
-					case retval := <-readerChan:
-						if retval == "ok" {
-							log.Println("Breaking out of loop to send next command")
-							break
-						} else {
-							writerChan <- "M105\n"
-							if err != nil {
-								log.Println(err)
-							}
-						}
-					}
-					break
-				}
+				waitForOk(readerChan)
+
 			} else {
 				log.Println("Discarding comment")
 			}
+		}
+	}
+}
+
+func waitForOk(r chan string) bool {
+	select {
+	case value := <-r:
+		if value == "ok" {
+			return true
+		} else {
+			return waitForOk(r)
 		}
 	}
 }
@@ -108,7 +106,6 @@ func writeChannel(w io.Writer) chan string {
 func readChannel(r io.Reader, reader chan string) {
 	buf := make([]byte, 128)
 	for {
-		log.Println("Waiting for messages")
 		len, err := r.Read(buf)
 		log.Println("Got message!")
 		if err != nil {
