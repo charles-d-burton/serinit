@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -105,8 +106,10 @@ func stripComments(line string) string {
 	line = strings.TrimSpace(line)
 	idx := strings.Index(line, ";")
 	if idx == 0 {
+		fmt.Println("Is comment: " + line)
 		return ""
 	}
+	fmt.Println("Is command: " + line)
 	command := string([]byte(line)[0:idx])
 	return command
 }
