@@ -114,6 +114,7 @@ func readChannel(r io.Reader, reader chan string) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		log.Println(string(buf[0:len]))
 		reader <- string(buf[0:len])
 	}
 }
