@@ -63,7 +63,7 @@ func main() {
 	}
 }
 
-/*func requestTemps(r io.Writer) error {
+/*func requestTemps(w chan string) error {
 	for {
 		fmt.Println("Requesting temps M105")
 		r.Write([]byte("M105\n"))
@@ -77,6 +77,7 @@ func writeChannel(w io.Writer) chan string {
 		for {
 			select {
 			case line := <-buf:
+				log.Println("Got message to write: " + line)
 				_, err := w.Write([]byte(line))
 				if err != nil {
 					log.Fatal(err)
@@ -101,10 +102,12 @@ func writeChannel(w io.Writer) chan string {
 	}
 }*/
 
-func readChannel(r io.ReadCloser, reader chan string) {
+func readChannel(r io.Reader, reader chan string) {
 	buf := make([]byte, 128)
 	for {
+		log.Println("Waiting for messages")
 		len, err := r.Read(buf)
+		log.Println("Got message!")
 		if err != nil {
 			log.Fatal(err)
 		}
