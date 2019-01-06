@@ -119,7 +119,7 @@ func readChannel(r io.Reader) chan string {
 				log.Fatal(err)
 			}
 			log.Println(string(buf[0:len]))
-			readerChan <- string(buf[0:len])
+			readerChan <- strings.TrimSpace(string(buf[0:len]))
 		}
 	}()
 	return readerChan
