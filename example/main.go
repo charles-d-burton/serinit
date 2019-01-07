@@ -82,24 +82,6 @@ func commandQueue(r io.Reader) chan string {
 	return buf
 }
 
-//Channel to write data to the device
-func writeChannel(w io.Writer) chan string {
-	buf := make(chan string, 1)
-	go func() {
-		for {
-			select {
-			case line := <-buf:
-				fmt.Printf(line)
-				_, err := w.Write([]byte(line))
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-		}
-	}()
-	return buf
-}
-
 //Read from the io port forever
 func readChannel(r io.Reader) chan string {
 	readerChan := make(chan string, 5)
