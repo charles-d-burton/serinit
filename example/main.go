@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/charles-d-burton/serinit"
 )
@@ -51,15 +50,6 @@ func waitForOk(r chan string) bool {
 			return true
 		}
 		return waitForOk(r)
-	}
-}
-
-//Request temperature
-func requestTemps(w chan string) error {
-	for {
-		fmt.Println("Requesting temps M105")
-		w <- "M105\n"
-		time.Sleep(time.Second)
 	}
 }
 
