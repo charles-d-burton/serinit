@@ -26,17 +26,29 @@ func main() {
 		}
 		defer file.Close()
 		readerChan := readChannel(device.SerialPort)
+		defer close(readerChan)
 		_, err = device.SerialPort.Write([]byte("M105\n"))
 		_, err = device.SerialPort.Write([]byte("M155 S2\n")) //Request a temperature status every 2 seconds
 		if err != nil {
 			log.Println(err)
 		}
-		commandQueue := commandQueue(file)
-		select {
-		case command := <-commandQueue:
-			fmt.Printf(command)
-			device.SerialPort.Write([]byte(command))
-			waitForOk(readerChan)
+		finished := make(chan bool, 1)
+		commandQueue := commandQueue(file, finished)
+		defer close(commandQueue)
+		for {
+			done := false
+			select {
+			case command := <-commandQueue:
+				pending := len(commandQueue)
+				if pending == 0 && done {
+					return
+				}
+				fmt.Printf(command)
+				device.SerialPort.Write([]byte(command))
+				waitForOk(readerChan)
+			case done = <-finished:
+				fmt.Println("Finished processing file")
+			}
 		}
 	}
 }
@@ -54,7 +66,7 @@ func waitForOk(r chan string) bool {
 }
 
 //Create a queue of commands ready to be issued
-func commandQueue(r io.Reader) chan string {
+func commandQueue(r io.Reader, done chan bool) chan string {
 	buf := make(chan string, 50)
 	go func() {
 		scanner := bufio.NewScanner(r)
@@ -68,6 +80,7 @@ func commandQueue(r io.Reader) chan string {
 		if err := scanner.Err(); err != nil {
 			log.Fatal(err)
 		}
+		done <- true
 	}()
 	return buf
 }
