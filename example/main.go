@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -43,14 +42,12 @@ func main() {
 		}
 		defer file.Close()
 		scanner := bufio.NewScanner(file)
-		var buffer bytes.Buffer
 		for scanner.Scan() {
 			value := stripComments(scanner.Text())
 			if value != "" {
 				log.Println("Sending Command: " + value)
 				writerChan <- value
-				waitForOk(readerChan, &buffer)
-				buffer.Reset()
+				waitForOk(readerChan)
 			} else {
 				log.Println("Discarding comment")
 			}
@@ -59,17 +56,14 @@ func main() {
 	}
 }
 
-func waitForOk(r chan []byte, buffer *bytes.Buffer) bool {
+func waitForOk(r chan string) bool {
 	select {
 	case value := <-r:
-		buffer.Write(value)
-		if len(buffer.Bytes()) < 2 {
-			return waitForOk(r, buffer)
-		} else if strings.Contains(string(buffer.Bytes()), "ok") {
-			log.Println("Found ok!")
+		fmt.Println(value)
+		if strings.Contains(value, "ok") {
 			return true
 		}
-		return waitForOk(r, buffer)
+		return waitForOk(r)
 	}
 }
 
@@ -82,7 +76,7 @@ func requestTemps(w chan string) error {
 }
 
 func writeChannel(w io.Writer) chan string {
-	buf := make(chan string, 10)
+	buf := make(chan string, 1)
 	go func() {
 		for {
 			select {
@@ -99,37 +93,24 @@ func writeChannel(w io.Writer) chan string {
 	return buf
 }
 
-/*func readChannel(deviceAddr string, reader chan string) {
-	t, err := follower.New(deviceAddr, follower.Config{
-		Whence: io.SeekEnd,
-		Offset: 0,
-		Reopen: true,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	for line := range t.Lines() {
-		reader <- line.String()
-	}
-}*/
-
-func readChannel(r io.Reader) chan []byte {
-	readerChan := make(chan []byte, 5)
-	buf := make([]byte, 128)
+//Read from the io port forever
+func readChannel(r io.Reader) chan string {
+	readerChan := make(chan string, 5)
+	scanner := bufio.NewScanner(r)
 	go func() {
 		for {
-			len, err := r.Read(buf)
-			log.Println("Got message!")
-			if err != nil {
+			for scanner.Scan() {
+				readerChan <- scanner.Text()
+			}
+			if err := scanner.Err(); err != nil {
 				log.Fatal(err)
 			}
-			log.Println(string(buf[0:len]))
-			readerChan <- buf
 		}
 	}()
 	return readerChan
 }
 
+//Strip comments from input lines prior to sending them to the printer
 func stripComments(line string) string {
 	line = strings.TrimSpace(line)
 	idx := strings.Index(line, ";")
@@ -141,6 +122,5 @@ func stripComments(line string) string {
 		return line + "\n"
 	}
 	fmt.Println("Is command: " + line)
-	command := string([]byte(line)[0:idx])
-	return command + "\n"
+	return string([]byte(line)[0:idx]) + "\n"
 }
