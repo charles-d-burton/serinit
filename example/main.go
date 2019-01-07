@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -42,29 +43,33 @@ func main() {
 		}
 		defer file.Close()
 		scanner := bufio.NewScanner(file)
+		var buffer bytes.Buffer
 		for scanner.Scan() {
 			value := stripComments(scanner.Text())
 			if value != "" {
 				log.Println("Sending Command: " + value)
 				writerChan <- value
-				waitForOk(readerChan)
-
+				waitForOk(readerChan, &buffer)
+				buffer.Reset()
 			} else {
 				log.Println("Discarding comment")
 			}
+
 		}
 	}
 }
 
-func waitForOk(r chan string) bool {
+func waitForOk(r chan []byte, buffer *bytes.Buffer) bool {
 	select {
 	case value := <-r:
-		if strings.Contains(value, "ok") {
+		buffer.Write(value)
+		if len(buffer.Bytes()) < 2 {
+			return waitForOk(r, buffer)
+		} else if strings.Contains(string(buffer.Bytes()), "ok") {
 			log.Println("Found ok!")
 			return true
-		} else {
-			return waitForOk(r)
 		}
+		return waitForOk(r, buffer)
 	}
 }
 
@@ -108,8 +113,8 @@ func writeChannel(w io.Writer) chan string {
 	}
 }*/
 
-func readChannel(r io.Reader) chan string {
-	readerChan := make(chan string, 5)
+func readChannel(r io.Reader) chan []byte {
+	readerChan := make(chan []byte, 5)
 	buf := make([]byte, 128)
 	go func() {
 		for {
@@ -119,7 +124,7 @@ func readChannel(r io.Reader) chan string {
 				log.Fatal(err)
 			}
 			log.Println(string(buf[0:len]))
-			readerChan <- strings.TrimSpace(string(buf[0:len]))
+			readerChan <- buf
 		}
 	}()
 	return readerChan
