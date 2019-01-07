@@ -20,42 +20,29 @@ func main() {
 
 	for _, device := range devices {
 		log.Println("Starting reader")
-		readerChan := readChannel(device.SerialPort)
-		writerChan := writeChannel(device.SerialPort)
-
-		//go requestTemps(writerChan)
-		//go requestTemps(device.SerialPort)
-		//log.Println("Requesting temperature")
-		//_, err := device.SerialPort.Write([]byte("M105\n"))
-		//log.Println("Request sent")
-		writerChan <- "M105\n"
-		writerChan <- "M105\n"
-		writerChan <- "M105\n"
-		time.Sleep(3 * time.Second)
-		if err != nil {
-			log.Println(err)
-		}
 		file, err := os.Open("./hook.gcode")
 		if err != nil {
 			log.Println(err)
 			return
 		}
 		defer file.Close()
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			value := stripComments(scanner.Text())
-			if value != "" {
-				log.Println("Sending Command: " + value)
-				writerChan <- value
-				waitForOk(readerChan)
-			} else {
-				log.Println("Discarding comment")
-			}
-
+		readerChan := readChannel(device.SerialPort)
+		_, err = device.SerialPort.Write([]byte("M105\n"))
+		_, err = device.SerialPort.Write([]byte("M155 S2\n")) //Request a temperature status every 2 seconds
+		if err != nil {
+			log.Println(err)
+		}
+		commandQueue := commandQueue(file)
+		select {
+		case command := <-commandQueue:
+			fmt.Printf(command)
+			device.SerialPort.Write([]byte(command))
+			waitForOk(readerChan)
 		}
 	}
 }
 
+//Recursively wait for a message that contains ok to wait to send next instruction
 func waitForOk(r chan string) bool {
 	select {
 	case value := <-r:
@@ -67,6 +54,7 @@ func waitForOk(r chan string) bool {
 	}
 }
 
+//Request temperature
 func requestTemps(w chan string) error {
 	for {
 		fmt.Println("Requesting temps M105")
@@ -75,15 +63,34 @@ func requestTemps(w chan string) error {
 	}
 }
 
+//Create a queue of commands ready to be issued
+func commandQueue(r io.Reader) chan string {
+	buf := make(chan string, 50)
+	go func() {
+		scanner := bufio.NewScanner(r)
+		for scanner.Scan() {
+			value := stripComments(scanner.Text())
+			if value != "" {
+				buf <- value
+			}
+		}
+		//TODO: Add safety here to cool down and move the print head
+		if err := scanner.Err(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	return buf
+}
+
+//Channel to write data to the device
 func writeChannel(w io.Writer) chan string {
 	buf := make(chan string, 1)
 	go func() {
 		for {
 			select {
 			case line := <-buf:
-				log.Println("Got message to write: " + line)
+				fmt.Printf(line)
 				_, err := w.Write([]byte(line))
-				log.Println("Message written!")
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -118,9 +125,7 @@ func stripComments(line string) string {
 		fmt.Println("Is comment: " + line)
 		return ""
 	} else if idx == -1 {
-		fmt.Println("No comments in line")
 		return line + "\n"
 	}
-	fmt.Println("Is command: " + line)
 	return string([]byte(line)[0:idx]) + "\n"
 }
