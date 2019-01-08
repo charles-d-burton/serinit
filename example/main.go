@@ -33,6 +33,7 @@ func main() {
 			log.Println(err)
 		}
 		finished := make(chan bool, 1)
+		defer close(finished)
 		commandQueue := commandQueue(file, finished)
 		defer close(commandQueue)
 		for {

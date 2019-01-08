@@ -1,0 +1,4 @@
+github.com/distributed/sers v1.0.2 h1:xYCW91FoHAITI78fbm30p1Xw+R0DmyOOLceVS1dJlic=
+github.com/distributed/sers v1.0.2/go.mod h1:2IiatmLX+UJu7uthUfNtUdMOcLeTkeYo8p7AraelsFA=
+github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5 h1:hNna6Fi0eP1f2sMBe/rJicDmaHmoXGe1Ta84FPYHLuE=
+github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5/go.mod h1:f1SCnEOt6sc3fOJfPQDRDzHOtSXuTtnz0ImG9kPRDV0=
