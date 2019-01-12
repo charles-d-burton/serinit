@@ -23,7 +23,7 @@ import (
 )
 
 func main() {
-    devices, err := serinit.GetDevices()
+    devices, err := serinit.AutoDiscoverDevices()
 	if err != nil {
 		log.Println(err)
     }

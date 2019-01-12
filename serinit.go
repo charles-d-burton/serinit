@@ -72,8 +72,8 @@ type SerialDevice struct {
 }
 
 //AutoDiscoverDevices iterate through a list of serial devices and initialize them
-func AutoDiscoverDevices() ([]SerialDevice, error) {
-	var devices []SerialDevice
+func AutoDiscoverDevices() ([]*SerialDevice, error) {
+	var devices []*SerialDevice
 	discovered, err := getSerialDevices()
 	if err != nil {
 		return nil, err
@@ -90,8 +90,11 @@ func AutoDiscoverDevices() ([]SerialDevice, error) {
 		}
 		fmt.Printf("Found working baud: %d\n", device.Baud)
 		device.initConnections()
-		devices = append(devices, device)
+		devices = append(devices, &device)
 
+	}
+	if len(devices) == 0 {
+		return nil, errors.New("No devices found")
 	}
 	return devices, nil
 }
