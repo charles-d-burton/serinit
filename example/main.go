@@ -58,13 +58,14 @@ func main() {
 
 //Recursively wait for a message that contains ok to wait to send next instruction
 func waitForOk(r chan []byte) bool {
-	select {
-	case value := <-r:
-		fmt.Println(string(value))
-		if strings.Contains(string(value), "ok") {
-			return true
+	for {
+		select {
+		case value := <-r:
+			fmt.Println(string(value))
+			if strings.Contains(string(value), "ok") {
+				return true
+			}
 		}
-		return waitForOk(r)
 	}
 }
 
