@@ -47,7 +47,9 @@ func main() {
 					return
 				}
 				fmt.Printf(command)
+				fmt.Println("Sending command")
 				device.Write([]byte(command))
+				fmt.Println("Waiting for ok")
 				waitForOk(readerChan)
 			case done = <-finished:
 				fmt.Println("Finished processing file")
