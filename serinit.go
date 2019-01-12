@@ -137,7 +137,7 @@ func (device *SerialDevice) ConnectDevice() error {
 func (device *SerialDevice) Reset() error {
 	device.Lock()
 	defer device.Unlock()
-	//close(device.Reader)
+	close(device.Reader)
 	close(device.ErrChan)
 	device.sp.Close()
 	found, err := device.findBaudRate()
@@ -333,24 +333,6 @@ func (device *SerialDevice) initConnections() {
 		}
 	}()
 }
-
-//Reset function for reader in case of error
-/*func (device *SerialDevice) resetReader() {
-	device.Lock()
-	defer device.Unlock()
-	go func() {
-		scanner := bufio.NewScanner(device.sp)
-		for {
-			for scanner.Scan() {
-				device.Reader <- []byte(scanner.Text())
-			}
-			if err := scanner.Err(); err != nil {
-				device.ErrChan <- err
-				return
-			}
-		}
-	}()
-}*/
 
 //Write thread-safe function that takes in data and writes it to port
 func (device *SerialDevice) Write(message []byte) error {
