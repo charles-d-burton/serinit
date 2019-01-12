@@ -30,24 +30,12 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		}
-		finished := make(chan bool, 1)
-		defer close(finished)
-		commandQueue := commandQueue(file, finished)
+		commandQueue := commandQueue(file)
 		defer close(commandQueue)
-		for {
-			done := false
-			select {
-			case command := <-commandQueue:
-				pending := len(commandQueue)
-				if pending == 0 && done {
-					return
-				}
-				fmt.Printf(command)
-				device.Write([]byte(command))
-				waitForOk(device.Reader)
-			case done = <-finished:
-				fmt.Println("Finished processing file")
-			}
+		for command := range commandQueue {
+			fmt.Printf(command)
+			device.Write([]byte(command))
+			waitForOk(device.Reader)
 		}
 	}
 }
@@ -66,7 +54,7 @@ func waitForOk(r chan []byte) bool {
 }
 
 //Create a queue of commands ready to be issued
-func commandQueue(f *os.File, done chan bool) chan string {
+func commandQueue(f *os.File) chan string {
 	buf := make(chan string, 500)
 	go func() {
 		scanner := bufio.NewScanner(f)
@@ -80,7 +68,7 @@ func commandQueue(f *os.File, done chan bool) chan string {
 		if err := scanner.Err(); err != nil {
 			log.Fatal(err)
 		}
-		done <- true
+		close(buf)
 	}()
 	return buf
 }
