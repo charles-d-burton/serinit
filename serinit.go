@@ -276,16 +276,16 @@ func (device *SerialDevice) initConnections() {
 	device.ErrChan = make(chan error, 5)
 	go func() {
 		scanner := bufio.NewScanner(device.sp)
-		for {
-			for scanner.Scan() {
-				device.Reader <- []byte(scanner.Text())
-			}
-			if err := scanner.Err(); err != nil {
-				fmt.Println("Had an error")
-				device.ErrChan <- err
-				return
-			}
+		//for {
+		for scanner.Scan() {
+			device.Reader <- []byte(scanner.Text())
 		}
+		if err := scanner.Err(); err != nil {
+			fmt.Println("Had an error")
+			device.ErrChan <- err
+			return
+		}
+		//}
 	}()
 
 }
