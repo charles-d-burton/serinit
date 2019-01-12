@@ -52,7 +52,7 @@ const test = "N0 M110 N0*125"
 
 //SerialDevice container to represent the location of a serial device and return an io port to it
 type SerialDevice struct {
-	*sync.Mutex
+	sync.Mutex
 	TTY        string `json:"tty"`
 	Baud       int    `json:"baud"`
 	DeviceName string `json:"device_name"`
