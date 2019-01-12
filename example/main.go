@@ -31,7 +31,6 @@ func main() {
 			log.Println(err)
 		}
 		commandQueue := commandQueue(file)
-		defer close(commandQueue)
 		for command := range commandQueue {
 			fmt.Printf(command)
 			device.Write([]byte(command))
