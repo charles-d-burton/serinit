@@ -278,7 +278,6 @@ func (device *SerialDevice) initConnections() {
 		scanner := bufio.NewScanner(device.sp)
 		for {
 			for scanner.Scan() {
-				fmt.Println("Scanned some text")
 				device.Reader <- []byte(scanner.Text())
 			}
 			if err := scanner.Err(); err != nil {
@@ -312,7 +311,7 @@ func (device *SerialDevice) resetReader() {
 //Write thread-safe function that takes in data and writes it to port
 func (device *SerialDevice) Write(message []byte) error {
 	device.Lock()
+	defer device.Unlock()
 	_, err := device.sp.Write(message)
-	device.Unlock()
 	return err
 }
