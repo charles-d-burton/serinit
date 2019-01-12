@@ -278,8 +278,8 @@ func (device *SerialDevice) initConnections() {
 		scanner := bufio.NewScanner(device.sp)
 		//for {
 		for scanner.Scan() {
-			fmt.Println("Dafuq?")
-			device.Reader <- []byte(scanner.Text())
+			//fmt.Println("Dafuq?")
+			device.Reader <- scanner.Bytes()
 		}
 		if err := scanner.Err(); err != nil {
 			fmt.Println("Had an error")
