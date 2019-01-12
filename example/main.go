@@ -25,12 +25,8 @@ func main() {
 			return
 		}
 		defer file.Close()
-		readerChan := device.Reader
-		defer close(readerChan)
-		err = device.Write([]byte("M1055\n"))
-		err = device.Write([]byte("M155 S2\n"))
-		//_, err = device.SerialPort.Write([]byte("M105\n"))
-		//_, err = device.SerialPort.Write([]byte("M155 S2\n")) //Request a temperature status every 2 seconds
+		err = device.Write([]byte("M105\n"))
+		err = device.Write([]byte("M155 S2\n")) //Request a temperature status every 2 seconds
 		if err != nil {
 			log.Println(err)
 		}
@@ -47,10 +43,8 @@ func main() {
 					return
 				}
 				fmt.Printf(command)
-				fmt.Println("Sending command")
 				device.Write([]byte(command))
-				fmt.Println("Waiting for ok")
-				waitForOk(readerChan)
+				waitForOk(device.Reader)
 			case done = <-finished:
 				fmt.Println("Finished processing file")
 			}
