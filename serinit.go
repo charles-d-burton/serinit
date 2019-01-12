@@ -48,13 +48,22 @@ var (
 	}
 )
 
-const test = "N0 M110 N0*125"
+const (
+	//Parity enable Parity
+	Parity = 1
+	//NoParity disable Parity
+	NoParity = 0
+)
 
 //SerialDevice container to represent the location of a serial device and return an io port to it
 type SerialDevice struct {
 	sync.Mutex
 	TTY        string `json:"tty"`
 	Baud       int    `json:"baud"`
+	DataBits   int    `json:"data_bits"`
+	Parity     int    `json:"parity"`
+	StopBits   int    `json:"stop_bits"`
+	HandShake  int    `json:"handshake"`
 	DeviceName string `json:"device_name"`
 	DeviceID   string `json:"device_id"`
 	Reader     chan []byte
@@ -62,8 +71,8 @@ type SerialDevice struct {
 	sp         sers.SerialPort
 }
 
-//GetDevices iterate through a list of serial devices and initialize them
-func GetDevices() ([]SerialDevice, error) {
+//AutoDiscoverDevices iterate through a list of serial devices and initialize them
+func AutoDiscoverDevices() ([]SerialDevice, error) {
 	var devices []SerialDevice
 	discovered, err := getSerialDevices()
 	if err != nil {
@@ -85,6 +94,40 @@ func GetDevices() ([]SerialDevice, error) {
 
 	}
 	return devices, nil
+}
+
+//GetDeviceTTYs return a list of paths to serial devices
+func GetDeviceTTYs() ([]string, error) {
+	return getSerialDevices()
+}
+
+//ConnectDevice manually connects device bypassing auto discovery
+func (device *SerialDevice) ConnectDevice() error {
+	sp, err := sers.Open(device.TTY)
+	if err != nil {
+		return err
+	}
+	if device.Baud == 0 {
+		return errors.New("Invalid Baud Rate")
+	}
+	if device.DataBits == 0 {
+		device.DataBits = 8
+	}
+
+	err = sp.SetMode(device.Baud, device.DataBits, device.Parity, device.StopBits, device.HandShake)
+	if err != nil {
+		return err
+	}
+	device.initConnections()
+	select {
+	case data := <-device.Reader:
+		if !isPrintable(string(data)) {
+			return errors.New("Data garbled, check your connection")
+		}
+	case err := <-device.ErrChan:
+		return err
+	}
+	return nil
 }
 
 //Reset and reinitialize the connection
