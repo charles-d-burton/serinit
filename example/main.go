@@ -66,10 +66,10 @@ func waitForOk(r chan []byte) bool {
 }
 
 //Create a queue of commands ready to be issued
-func commandQueue(r io.Reader, done chan bool) chan string {
-	buf := make(chan string, 50)
+func commandQueue(f *os.File, done chan bool) chan string {
+	buf := make(chan string, 500)
 	go func() {
-		scanner := bufio.NewScanner(r)
+		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
 			value := stripComments(scanner.Text())
 			if value != "" {
@@ -109,7 +109,7 @@ func stripComments(line string) string {
 	if idx == 0 {
 		fmt.Println("Is comment: " + line)
 		return ""
-	} else if idx == -1 {
+	} else if idx < 0 {
 		return line + "\n"
 	}
 	return string([]byte(line)[0:idx]) + "\n"
