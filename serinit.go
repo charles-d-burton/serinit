@@ -1,12 +1,14 @@
 package serinit
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"path/filepath"
+	"sync"
 	"time"
 	"unicode"
 
@@ -46,11 +48,18 @@ var (
 	}
 )
 
+const test = "N0 M110 N0*125"
+
 //SerialDevice container to represent the location of a serial device and return an io port to it
 type SerialDevice struct {
-	TTY        string          `json:"tty"`
-	Baud       int             `json:"baud"`
-	SerialPort sers.SerialPort `json:"-"`
+	*sync.Mutex
+	TTY        string `json:"tty"`
+	Baud       int    `json:"baud"`
+	DeviceName string `json:"device_name"`
+	DeviceID   string `json:"device_id"`
+	Reader     chan []byte
+	ErrChan    chan error
+	sp         sers.SerialPort
 }
 
 //GetDevices iterate through a list of serial devices and initialize them
@@ -71,6 +80,7 @@ func GetDevices() ([]SerialDevice, error) {
 			return nil, errors.New("Unable to determine baud rate")
 		}
 		fmt.Printf("Found working baud: %d\n", device.Baud)
+		device.initConnections()
 		devices = append(devices, device)
 
 	}
@@ -79,6 +89,11 @@ func GetDevices() ([]SerialDevice, error) {
 
 //Reset and reinitialize the connection
 func (device *SerialDevice) Reset() error {
+	device.Lock()
+	defer device.Unlock()
+	close(device.Reader)
+	close(device.ErrChan)
+	device.sp.Close()
 	found, err := device.findBaudRate()
 	if err != nil {
 		return err
@@ -126,15 +141,15 @@ func (device *SerialDevice) isBaudValid(baud int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	device.SerialPort = sp
 	fmt.Printf("Setting baud to: %d\n", baud)
 	device.Baud = baud
-	found, err := testBaud(baud, device.SerialPort)
+	found, err := testBaud(baud, sp)
 	if err != nil {
 		sp.Close()
 		return false, err
 	}
 	if found {
+		device.sp = sp
 		return true, nil
 	} else {
 		sp.Close()
@@ -251,4 +266,51 @@ func isPrintable(s string) bool {
 		}
 	}
 	return true
+}
+
+//Setup IO to the device
+func (device *SerialDevice) initConnections() {
+	device.Lock()
+	defer device.Unlock()
+	device.Reader = make(chan []byte, 100)
+	device.ErrChan = make(chan error, 5)
+	go func() {
+		scanner := bufio.NewScanner(device.sp)
+		for {
+			for scanner.Scan() {
+				device.Reader <- []byte(scanner.Text())
+			}
+			if err := scanner.Err(); err != nil {
+				device.ErrChan <- err
+				return
+			}
+		}
+	}()
+
+}
+
+//Reset function for reader in case of error
+func (device *SerialDevice) resetReader() {
+	device.Lock()
+	defer device.Unlock()
+	go func() {
+		scanner := bufio.NewScanner(device.sp)
+		for {
+			for scanner.Scan() {
+				device.Reader <- []byte(scanner.Text())
+			}
+			if err := scanner.Err(); err != nil {
+				device.ErrChan <- err
+				return
+			}
+		}
+	}()
+}
+
+//Write thread-safe function that takes in data and writes it to port
+func (device *SerialDevice) Write(message []byte) error {
+	device.Lock()
+	_, err := device.sp.Write(message)
+	device.Unlock()
+	return err
 }

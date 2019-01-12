@@ -25,10 +25,12 @@ func main() {
 			return
 		}
 		defer file.Close()
-		readerChan := readChannel(device.SerialPort)
+		readerChan := device.Reader
 		defer close(readerChan)
-		_, err = device.SerialPort.Write([]byte("M105\n"))
-		_, err = device.SerialPort.Write([]byte("M155 S2\n")) //Request a temperature status every 2 seconds
+		err = device.Write([]byte("M1055\n"))
+		err = device.Write([]byte("M155 S2\n"))
+		//_, err = device.SerialPort.Write([]byte("M105\n"))
+		//_, err = device.SerialPort.Write([]byte("M155 S2\n")) //Request a temperature status every 2 seconds
 		if err != nil {
 			log.Println(err)
 		}
@@ -45,7 +47,7 @@ func main() {
 					return
 				}
 				fmt.Printf(command)
-				device.SerialPort.Write([]byte(command))
+				device.Write([]byte(command))
 				waitForOk(readerChan)
 			case done = <-finished:
 				fmt.Println("Finished processing file")
@@ -55,11 +57,11 @@ func main() {
 }
 
 //Recursively wait for a message that contains ok to wait to send next instruction
-func waitForOk(r chan string) bool {
+func waitForOk(r chan []byte) bool {
 	select {
 	case value := <-r:
-		fmt.Println(value)
-		if strings.Contains(value, "ok") {
+		fmt.Println(string(value))
+		if strings.Contains(string(value), "ok") {
 			return true
 		}
 		return waitForOk(r)
