@@ -121,6 +121,7 @@ func (device *SerialDevice) ConnectDevice() error {
 	if err != nil {
 		return err
 	}
+	device.sp = sp
 	device.initConnections()
 	select {
 	case data := <-device.Reader:
