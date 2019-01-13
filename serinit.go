@@ -116,7 +116,7 @@ func (device *SerialDevice) ConnectDevice() error {
 	if device.DataBits == 0 {
 		device.DataBits = 8
 	}
-
+	fmt.Println("Connecting with: ", device)
 	err = sp.SetMode(device.Baud, device.DataBits, device.Parity, device.StopBits, device.HandShake)
 	if err != nil {
 		return err
