@@ -58,7 +58,15 @@ const (
 //SerialDevice container to represent the location of a serial device and return an io port to it
 type SerialDevice struct {
 	sync.Mutex
-	TTY        string `json:"tty"`
+	Options *SerialDeviceOptions
+	TTY     string `json:"tty"`
+	Reader  chan []byte
+	ErrChan chan error
+	sp      sers.SerialPort
+}
+
+//SerialDeviceOptions
+type SerialDeviceOptions struct {
 	Baud       int    `json:"baud"`
 	DataBits   int    `json:"data_bits"`
 	Parity     int    `json:"parity"`
@@ -66,9 +74,6 @@ type SerialDevice struct {
 	HandShake  int    `json:"handshake"`
 	DeviceName string `json:"device_name"`
 	DeviceID   string `json:"device_id"`
-	Reader     chan []byte
-	ErrChan    chan error
-	sp         sers.SerialPort
 }
 
 //AutoDiscoverDevices iterate through a list of serial devices and initialize them
@@ -88,7 +93,7 @@ func AutoDiscoverDevices() ([]*SerialDevice, error) {
 		if !found {
 			return nil, errors.New("Unable to determine baud rate")
 		}
-		fmt.Printf("Found working baud: %d\n", device.Baud)
+		fmt.Printf("Found working baud: %d\n", device.Options.Baud)
 		device.initConnections()
 		devices = append(devices, &device)
 
@@ -110,14 +115,14 @@ func (device *SerialDevice) ConnectDevice() error {
 	if err != nil {
 		return err
 	}
-	if device.Baud == 0 {
+	if device.Options.Baud == 0 {
 		return errors.New("Invalid Baud Rate")
 	}
-	if device.DataBits == 0 {
-		device.DataBits = 8
+	if device.Options.DataBits == 0 {
+		device.Options.DataBits = 8
 	}
 	fmt.Println("Connecting with: ", device)
-	err = sp.SetMode(device.Baud, device.DataBits, device.Parity, device.StopBits, device.HandShake)
+	err = sp.SetMode(device.Options.Baud, device.Options.DataBits, device.Options.Parity, device.Options.StopBits, device.Options.HandShake)
 	if err != nil {
 		return err
 	}
@@ -189,7 +194,7 @@ func (device *SerialDevice) isBaudValid(baud int) (bool, error) {
 		return false, err
 	}
 	fmt.Printf("Setting baud to: %d\n", baud)
-	device.Baud = baud
+	device.Options.Baud = baud
 	found, err := testBaud(baud, sp)
 	if err != nil {
 		sp.Close()
