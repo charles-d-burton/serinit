@@ -58,22 +58,50 @@ const (
 //SerialDevice container to represent the location of a serial device and return an io port to it
 type SerialDevice struct {
 	sync.Mutex
-	Options *SerialDeviceOptions
-	TTY     string `json:"tty"`
-	Reader  chan []byte
-	ErrChan chan error
-	sp      sers.SerialPort
+	Options    *SerialDeviceOptions
+	DeviceName string `json:"device_name"`
+	DeviceID   string `json:"device_id"`
+	Reader     chan []byte
+	ErrChan    chan error
+	sp         sers.SerialPort
 }
 
 //SerialDeviceOptions
 type SerialDeviceOptions struct {
-	Baud       int    `json:"baud"`
-	DataBits   int    `json:"data_bits"`
-	Parity     int    `json:"parity"`
-	StopBits   int    `json:"stop_bits"`
-	HandShake  int    `json:"handshake"`
-	DeviceName string `json:"device_name"`
-	DeviceID   string `json:"device_id"`
+	TTY       string `json:"tty"`
+	Baud      int    `json:"baud"`
+	DataBits  int    `json:"data_bits"`
+	Parity    int    `json:"parity"`
+	StopBits  int    `json:"stop_bits"`
+	HandShake int    `json:"handshake"`
+}
+
+//New creates new device, sets up sane defaults for connection
+func New(options *SerialDeviceOptions) (*SerialDevice, error) {
+	if options == nil {
+		return nil, errors.New("device options must be defined")
+	}
+	if options.TTY == "" {
+		return nil, errors.New("device TTY undefined")
+	}
+	if options.Baud == 0 {
+		options.Baud = 9600
+	}
+	if options.DataBits == 0 {
+		options.DataBits = 8
+	}
+	device := &SerialDevice{
+		Options:    options,
+		DeviceName: "new-device",
+	}
+	valid, err := device.isBaudValid(options.Baud)
+	if err != nil {
+		return nil, err
+	}
+	if !valid {
+		return nil, errors.New("baud rate is not valid")
+	}
+	return device, nil
 }
 
 //AutoDiscoverDevices iterate through a list of serial devices and initialize them
@@ -85,7 +113,7 @@ func AutoDiscoverDevices() ([]*SerialDevice, error) {
 	}
 	for _, d := range discovered {
 		var device SerialDevice
-		device.TTY = d
+		device.Options.TTY = d
 		found, err := device.findBaudRate()
 		if err != nil {
 			return nil, err
@@ -111,7 +139,7 @@ func GetDeviceTTYs() ([]string, error) {
 
 //ConnectDevice manually connects device bypassing auto discovery
 func (device *SerialDevice) ConnectDevice() error {
-	sp, err := sers.Open(device.TTY)
+	sp, err := sers.Open(device.Options.TTY)
 	if err != nil {
 		return err
 	}
@@ -189,7 +217,7 @@ func (device *SerialDevice) findBaudRate() (bool, error) {
 }
 
 func (device *SerialDevice) isBaudValid(baud int) (bool, error) {
-	sp, err := sers.Open(device.TTY)
+	sp, err := sers.Open(device.Options.TTY)
 	if err != nil {
 		return false, err
 	}
@@ -340,6 +368,7 @@ func (device *SerialDevice) initConnections() {
 	}()
 }
 
+//TODO: Rethink this, it's slow
 //Write thread-safe function that takes in data and writes it to port
 func (device *SerialDevice) Write(message []byte) error {
 	device.Lock()
